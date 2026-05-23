@@ -1,30 +1,37 @@
 # WantGoo Spider
 
-> 玩股網 (WantGoo) 盤後籌碼與市場廣度自動化爬蟲專案，專為下游 AI 交易代理人提供結構化市場指標資料 (Phase 2: Playwright 升級版)。
+> 自動化抓取玩股網盤後籌碼與市場廣度資訊，並以 Playwright 繞過 Cloudflare 驗證的網路爬蟲系統。
 
 ---
 
 ## 🏛️ 專案架構 (Architecture & Directory Structure)
 
+請根據實際產出的目錄結構描繪樹狀圖，讓接手開發者一目瞭然：
 
 ```text
 .
-├── src/                # 核心程式碼 (包含 fetcher, parsers, exporter)
-│   ├── main.py
-│   ├── fetcher/
-│   └── parsers/
-├── tests/              # 測試案例 (Mock 機制)
-│   ├── test_fetcher.py
-│   └── test_parsers.py
-├── docs/               # 規格書與 QA 報告
-├── requirements.txt    # 依賴套件清單 (含 playwright)
-└── README.md           # 專案指南 (本文件)
+├── src/                    # 核心程式碼
+│   ├── main.py             # 程式進入點 (排程或單次執行)
+│   ├── fetcher/            # 網路請求模組 (Playwright)
+│   │   └── api.py
+│   ├── parsers/            # 資料解析與防呆模組
+│   │   ├── sentiment_parser.py
+│   │   ├── institutional_parser.py
+│   │   └── breadth_parser.py
+│   └── exporter.py         # JSON 檔案輸出模組
+├── tests/                  # 測試案例
+│   ├── test_fetcher.py     # fetcher 單元測試 (含 mock 機制)
+│   └── test_parsers.py     # 結構解析單元測試
+├── docs/                   # 規格書與 PRD 文件
+├── requirements.txt        # 依賴套件清單 (含 requests, bs4, playwright 等)
+└── README.md               # 專案指南 (本文件)
 ```
 
 ---
 
 ## ⚙️ 環境建置 (Prerequisites & Installation)
 
+請提供最直接的快速啟動指令，確保任何人複製貼上皆可運行：
 
 1. **建立並啟動虛擬環境**
    ```bash
@@ -32,37 +39,45 @@
    source venv/bin/activate
    ```
 
-2. **安裝依賴套件**
+2. **安裝依賴套件與瀏覽器核心**
    ```bash
    pip install -r requirements.txt
-   ```
-
-3. **安裝 Playwright 瀏覽器引擎 (必須執行)**
-   ```bash
-   playwright install
+   playwright install chromium
    ```
 
 ---
 
 ## 🚀 啟動與使用 (Usage)
 
-**啟動服務**：
+列出啟動服務的指令以及預期的結果。
+
+**執行爬蟲程式**：
 ```bash
 python src/main.py
 ```
 
 **預期結果**：
-執行完畢後，將於專案根目錄產出符合投資蝦需求規格之 `wantgoo_market_data.json` 檔案。
+執行完畢後，將於專案根目錄產生 `wantgoo_market_data.json` 檔案，內容包含結構化之盤後資訊：
+```json
+{
+  "global_timestamp": "2026-05-23T21:30:00+08:00",
+  "data": {
+    "sentiment_indicators": {...},
+    "institutional_chips": {...},
+    "market_breadth": {...}
+  }
+}
+```
 
 ---
 
 ## 🧪 測試與驗證 (Testing & Quality Assurance)
 
-本專案嚴格遵守測試驅動與代碼品質規範，單元測試嚴禁發出真實 HTTP 請求：
+本專案嚴格遵守測試驅動與代碼品質規範：
 
-**執行非同步單元測試 (Pytest)**：
+**執行單元測試 (Pytest)**：
 ```bash
-pytest tests/
+pytest
 ```
 
 **執行靜態檢查 (Ruff)**：

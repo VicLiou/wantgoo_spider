@@ -5,12 +5,14 @@ wantgoo_spider
 
 ## 測試結果：PASS
 
-### 1. 靜態結構與 Linter 審查 (Fail-Fast)
-- **Linter (Ruff)**：執行 `ruff check .` 未發現任何錯誤或警告 (All checks passed)，前次未使用的 import 已修復。✔️ **通過**
+### 1. 靜態結構與 README 規範審查 (Fail-Fast)
+- **實體文件檢驗**：根目錄已確實存在 `README.md`。✔️ **通過**
+- **內容規範檢驗**：已嚴格比對，`README.md` 包含「專案架構 (樹狀圖)」、「環境建置」、「啟動與使用」、「測試與驗證」以及「維護聲明」等所有企業級規範章節，格式 100% 符合 `README_GUIDELINES.md` 的要求。✔️ **通過**
+- **Linter (Ruff)**：於專案虛擬環境 (venv) 執行 `ruff check .` 未發現任何語法錯誤或排版警告 (All checks passed)。✔️ **通過**
 
 ### 2. 動態邏輯驗證與測試腳本 (Pytest)
-- **單元測試執行**：執行 `pytest` 成功，共收集並通過 8 項測試案例 (`test_fetcher.py` 及 `test_parsers.py`)。✔️ **通過**
-- **Mock 驗證**：已驗證測試正確使用了 `unittest.mock.patch` 對 Playwright 進行 Mock，測試過程未實際啟動瀏覽器，亦無真實連線，符合測試規範。✔️ **通過**
+- **單元測試執行**：於 venv 虛擬環境中執行 `pytest` 成功，共收集並全數通過 8 項測試案例。✔️ **通過**
+- **Mock 驗證**：已驗證網路請求具備完整的 Mock 覆蓋，測試過程未真實連線伺服器與啟動實體瀏覽器。✔️ **通過**
 
 ## 結論
-實體檔案與邏輯驗證皆符合規範，Linter 與 Pytest 全數通過。准予放行。
+實體檔案結構完整，文件規範審查達標。Linter 靜態掃描與 pytest 動態測試全數 PASS。各項規格與防呆紅線皆符合要求。准予放行。

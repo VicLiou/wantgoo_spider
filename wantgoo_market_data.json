@@ -1,30 +1,17 @@
 {
-  "global_timestamp": "2026-05-23T17:36:47+08:00",
+  "global_timestamp": "2026-05-23T21:14:23+08:00",
   "data": {
     "sentiment_indicators": {
-      "updated_at": "2026-05-23T17:36:47+08:00",
-      "status": "ok",
-      "micro_tx_retail_ratio": {
-        "net_position": 2500,
-        "ratio_pct": 15.2,
-        "daily_change": 500
-      }
+      "status": "error",
+      "message": "Missing sentiment data"
     },
     "institutional_chips": {
-      "updated_at": "2026-05-23T17:36:47+08:00",
-      "status": "ok",
-      "foreign_tx_net_position": -5200,
-      "foreign_daily_change": -1200,
-      "top10_specific_net_position": 1200,
-      "top10_daily_change": 300
+      "status": "error",
+      "message": "Missing institutional data"
     },
     "market_breadth": {
-      "updated_at": "2026-05-23T17:36:47+08:00",
-      "status": "ok",
-      "advancing_issues": 650,
-      "declining_issues": 230,
-      "bullish_alignment_pct": 45.5,
-      "bearish_alignment_pct": 30.2
+      "status": "error",
+      "message": "Missing breadth data"
     }
   }
 }

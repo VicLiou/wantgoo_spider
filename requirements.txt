@@ -2,3 +2,5 @@ requests
 beautifulsoup4
 pytest
 responses
+playwright
+pytest-mock

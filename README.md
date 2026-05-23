@@ -1,46 +1,91 @@
 # WantGoo Spider
 
-> 自動化抓取玩股網盤後籌碼與市場廣度資訊。
+> 自動化抓取玩股網盤後籌碼與市場廣度資訊，並以 Playwright 繞過 Cloudflare 驗證的網路爬蟲系統。
 
 ---
 
 ## 🏛️ 專案架構 (Architecture & Directory Structure)
+
+請根據實際產出的目錄結構描繪樹狀圖，讓接手開發者一目瞭然：
+
 ```text
 .
-├── src/
-│   ├── main.py
-│   ├── fetcher/
-│   ├── parsers/
-│   └── exporter.py
-├── tests/
-│   └── test_parsers.py
-├── docs/
-├── requirements.txt
-└── README.md
+├── src/                    # 核心程式碼
+│   ├── main.py             # 程式進入點 (排程或單次執行)
+│   ├── fetcher/            # 網路請求模組 (Playwright)
+│   │   └── api.py
+│   ├── parsers/            # 資料解析與防呆模組
+│   │   ├── sentiment_parser.py
+│   │   ├── institutional_parser.py
+│   │   └── breadth_parser.py
+│   └── exporter.py         # JSON 檔案輸出模組
+├── tests/                  # 測試案例
+│   ├── test_fetcher.py     # fetcher 單元測試 (含 mock 機制)
+│   └── test_parsers.py     # 結構解析單元測試
+├── docs/                   # 規格書與 PRD 文件
+├── requirements.txt        # 依賴套件清單 (含 requests, bs4, playwright 等)
+└── README.md               # 專案指南 (本文件)
 ```
 
+---
+
 ## ⚙️ 環境建置 (Prerequisites & Installation)
+
+請提供最直接的快速啟動指令，確保任何人複製貼上皆可運行：
+
 1. **建立並啟動虛擬環境**
    ```bash
    python -m venv venv
    source venv/bin/activate
    ```
 
-2. **安裝依賴套件**
+2. **安裝依賴套件與瀏覽器核心**
    ```bash
    pip install -r requirements.txt
+   playwright install chromium
    ```
 
+---
+
 ## 🚀 啟動與使用 (Usage)
+
+列出啟動服務的指令以及預期的結果。
+
+**執行爬蟲程式**：
 ```bash
 python src/main.py
 ```
-執行後將在根目錄產生 `wantgoo_market_data.json`。
+
+**預期結果**：
+執行完畢後，將於專案根目錄產生 `wantgoo_market_data.json` 檔案，內容包含結構化之盤後資訊：
+```json
+{
+  "global_timestamp": "2026-05-23T21:30:00+08:00",
+  "data": {
+    "sentiment_indicators": {...},
+    "institutional_chips": {...},
+    "market_breadth": {...}
+  }
+}
+```
+
+---
 
 ## 🧪 測試與驗證 (Testing & Quality Assurance)
+
+本專案嚴格遵守測試驅動與代碼品質規範：
+
+**執行單元測試 (Pytest)**：
 ```bash
 pytest
 ```
+
+**執行靜態檢查 (Ruff)**：
+```bash
+ruff check .
+```
+
+---
 
 ## 🤖 維護聲明 (Maintainer Info)
 - **開發者**: DDAD SDLC PG Bot

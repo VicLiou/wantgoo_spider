@@ -1,25 +1,24 @@
-# 驗收標準與邊界條件 (Acceptance Criteria & Edge Cases)
+# 驗收標準與邊界條件 (Acceptance Criteria & Edge Cases) - Phase 2
 
 ## 專案名稱
 wantgoo_spider
 
 ## 1. 核心驗收標準 (Functional Acceptance Criteria)
-1. **資料爬取與 JSON 產出**: 程式執行完成後，必須於專案根目錄產生 (或覆寫) `wantgoo_market_data.json` 檔案。
-2. **Schema 一致性**: 輸出的 JSON 結構必須 100% 吻合 PRD 中第 3 節定義之格式，包含三個子模組：`sentiment_indicators`, `institutional_chips`, `market_breadth`。
-3. **時間戳記格式**: 所有 `updated_at` 與 `global_timestamp` 必須具備正確的 ISO 8601 時區資訊 (如 `+08:00`)。
+1. **Cloudflare 突破**: 爬蟲能成功使用 `playwright` 通過 Cloudflare 驗證，不再發生 HTTP 403 阻擋而無法取得資料的問題。
+2. **資料相容性**: 成功攔截或解析後，於專案根目錄產出的 `wantgoo_market_data.json` 檔案結構，必須 100% 吻合 Phase 1 定義 (包含 `sentiment_indicators`, `institutional_chips`, `market_breadth` 等欄位與 ISO 8601 時間戳)。
 
 ## 2. 測試規範 (Non-functional Acceptance Criteria - 強制要求)
-1. **強制 Mock 機制**: QA 或自動化測試在執行 `pytest` 時，**嚴禁對玩股網正式機 (Production) 發出真實的 HTTP 請求**。
-2. **測試實作方式**: 必須使用 `unittest.mock`, `pytest-mock`，或者 `responses` / `requests-mock` 套件攔截 HTTP 呼叫，並由 `tests/fixtures/` 提供預先下載好的靜態假網頁或假 JSON 回應檔。
+1. **自動化測試更新**: 因引入非同步機制，單元測試需改用 `pytest-asyncio` 等非同步測試框架。
+2. **強制 Mock 機制**: **嚴禁對真實的玩股網伺服器發出連線**。必須透過 Playwright 內建的路由攔截 (`page.route`) 或 Mock 套件，在測試執行時將請求導向 `tests/fixtures/` 內的假資料檔案。
 
 ## 3. 極端邊界條件 (Edge Cases for QA)
 測試計畫與系統防護必須涵蓋以下情境 (Fail-Fast 與 Anti-Fragile 原則)：
-1. **網頁結構變動 / API 欄位消失**:
-   - **情境**: 玩股網改版，導致 BeautifulSoup 找不到特定的 div/table，或 API JSON 缺少指定 key。
-   - **預期行為**: 該子模組的 `status` 必須精準標記為 `"error"`，其數值欄位不可自動補 `0` 也不可引發全局 Crash。其餘未受影響的子模組應正常解析。
-2. **連線逾時 (Timeout) 或 阻擋 (HTTP 403 / 429)**:
-   - **情境**: 網路斷線或被目標伺服器限流 (Rate Limiting)。
-   - **預期行為**: `requests` 層必須捕捉 Timeout 異常，整個資料區塊 `status` 寫入 `"error"` 並優雅結束，不得出現 Unhandled Exception 導致 CI 噴錯。
-3. **資料型態異常**:
-   - **情境**: 預期抓取整數部位量，但抓到空字串 `""` 或 `"-"` 或非數值字元。
-   - **預期行為**: Parser 轉型失敗時，該模組 `status` 標為 `"error"`，嚴格禁止將空字串當作 0 來計算，以防止引發嚴重交易邏輯錯誤。
+1. **Cloudflare 驗證無限迴圈 (Timeout)**:
+   - **情境**: 網站提高防護層級，導致無頭瀏覽器無法在合理時間內 (例如 30 秒) 通過 Challenge 驗證。
+   - **預期行為**: `playwright` 需觸發 TimeoutError 並妥善捕捉。爬蟲應正常結束運行，並將所有模組或失敗模組的 `status` 標為 `"error"`。
+2. **攔截目標 API 變更**:
+   - **情境**: 目標網頁不再發送預期的 API (URL Path 改變) 或 HTML 結構大改。
+   - **預期行為**: 抓取或解析失敗時，觸發防呆機制，該模組 `status` 標為 `"error"`，其餘未受影響的模組應正常輸出。
+3. **無外網連線 (Network Down)**:
+   - **情境**: 執行環境無網路。
+   - **預期行為**: Playwright 啟動導航失敗，應優雅捕捉 DNS 或網路異常，產生 status 為 `"error"` 的空殼 JSON 並結束，避免引發 Unhandled Exception。

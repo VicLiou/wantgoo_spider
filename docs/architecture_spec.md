@@ -1,47 +1,46 @@
-# 系統架構規格 (System Architecture Specification)
+# 系統架構規格 (System Architecture Specification) - Phase 2
 
 ## 專案名稱
 wantgoo_spider
 
 ## 1. 系統架構總覽
-本專案為自動化網路爬蟲，專注於抓取玩股網 (WantGoo) 盤後籌碼與市場廣度資訊。為符合專案輕量化與效能要求，**強制規定使用 `requests` 模組**作為 HTTP 請求核心，若需解析 HTML 則搭配 `BeautifulSoup4` (或其他輕量解析庫)，拒絕使用耗費資源的 `playwright` 或 `selenium`。爬取結果最終實體化為結構化 JSON 檔案，供應 AI 交易代理人 (Trading Agents) 使用。
+因應目標網站 (WantGoo) 導入 Cloudflare 防護導致 `requests` 遭遇 HTTP 403 阻擋，本專案 (Phase 2) 進行核心爬取模組升級。架構由同步的 `requests` 全面替換為基於非同步 (Async) 的 `playwright` 無頭瀏覽器 (Headless Browser) 方案。
+系統將啟動 Browser Context 模擬真實使用者行為，等待並突破 Cloudflare 驗證後，直接攔截底層 API 回傳的 JSON 封包或進行 DOM 解析，最終依舊實體化為結構化 JSON 檔案，供應 AI 交易代理人使用。
 
 ## 2. 目錄結構 (Folder Structure)
-遵循 Clean Architecture 原則，切割資料抓取、解析、檔案輸出與測試：
-
 ```text
 /home/ddad/projects/wantgoo_spider/
 ├── README.md               # 專案根目錄說明文件
 ├── docs/                   # 系統與需求規格區
-│   ├── PRD.md
+│   ├── PRD_Phase2.md
 │   ├── architecture_spec.md
 │   └── acceptance_criteria.md
 ├── src/                    # 應用程式原始碼
-│   ├── main.py             # 程式進入點 (排程或單次執行)
-│   ├── fetcher/            # 負責處理 requests HTTP 請求與防護機制
-│   ├── parsers/            # 負責將 HTML/API 回傳資料解析為結構化 Dict
+│   ├── main.py             # 程式進入點 (Async 啟動)
+│   ├── fetcher/            # 負責 Playwright 瀏覽器控制與 Cloudflare 繞過
+│   ├── parsers/            # 處理 API Payload 或 DOM 解析
 │   └── exporter.py         # 負責將資料格式化並輸出為 JSON 檔案
 ├── tests/                  # 測試區
-│   ├── fixtures/           # 放置 Mock 用的靜態 HTML 或 API JSON
-│   └── test_parsers.py     # pytest 單元測試
-└── requirements.txt        # 專案依賴 (requests, beautifulsoup4, pytest, responses 等)
+│   ├── fixtures/           # 放置 Mock 用的靜態 JSON 或 HTML
+│   └── test_parsers.py     # pytest-asyncio 單元測試
+└── requirements.txt        # 專案依賴 (playwright, pytest, pytest-asyncio 等)
 ```
 
 ## 3. 模組介面 (Module Interfaces)
-### 3.1 爬蟲請求模組 (`src/fetcher`)
-- **技術棧**: `requests`
-- **職責**: 負責與玩股網伺服器進行 HTTP 通訊。封裝重試機制 (Retry)、Timeout 控制與 Headers (如 User-Agent) 偽裝。
-- **錯誤處理**: 發生連線錯誤或 HTTP 非 200 時，不可崩潰，應記錄錯誤狀態回傳給解析層。
+### 3.1 瀏覽器爬取模組 (`src/fetcher/`)
+- **技術棧**: `playwright` (Async API)
+- **職責**: 
+  - 啟動 Headless Browser Context，設定擬真 User-Agent。
+  - 導航至目標頁面並等待 Cloudflare Challenge 通過 (等待特定元件出現或超時)。
+  - 透過 `page.on("response", ...)` 攔截網頁載入時的背景 API 封包。
+- **錯誤處理**: 若遭遇無限驗證迴圈或逾時 (Timeout)，安全捕捉例外並將狀態標記為錯誤，不可引發整個爬蟲崩潰。
 
 ### 3.2 資料解析模組 (`src/parsers/`)
-- **模組劃分**: 
-  - `sentiment_parser`: 負責解析微台指/小台指散戶多空比 (Module 2)。
-  - `institutional_parser`: 負責解析三大法人與前十大特定法人部位 (Module 3)。
-  - `breadth_parser`: 負責解析大盤漲跌家數與多空排列比例 (Module 4)。
-- **防呆機制**: 欄位遺失或網頁結構變更時，必須將該模組的 `status` 設為 `"error"` 或 `"waiting_data"`，嚴禁回傳預設值如 `null` 或 `0`，避免誤導 AI 代理人。
+- **職責**: 解析從 Fetcher 攔截到的 API Payload 或是 DOM。
+- **防呆機制**: 繼承 Phase 1，若 JSON Key 不存在或 DOM 變更，必須將該模組的 `status` 設為 `"error"`，嚴禁回傳預設值如 `null` 或 `0`，避免誤導下游 AI 交易策略。
 
 ### 3.3 輸出模組 (`src/exporter.py`)
-- **職責**: 將解析後的 Python Dictionary 轉譯為最終 JSON 格式，並寫入本機檔案 `wantgoo_market_data.json`。
+- **職責**: 將彙整好的 Python Dictionary 轉譯為統一的 JSON 結構 (相容 Phase 1 Schema)，寫入 `wantgoo_market_data.json`。
 
-## 4. 資料庫 Schema (Database Schema)
-本專案無關聯式資料庫。所有資料以本機 JSON 檔案落地，Schema 完全依照 PRD 中所定義的樹狀結構 (包含 `global_timestamp` 與 `data` 節點)，確保時間戳記採用 ISO 8601 (含時區) 格式。
+## 4. 資料庫 Schema
+本專案無關聯式資料庫。資料以本機 JSON 檔案落地，Schema 維持 Phase 1 定義不變，確保向下相容。

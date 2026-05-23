@@ -1,6 +1,6 @@
 # WantGoo Spider
 
-> 自動化抓取玩股網盤後籌碼與市場廣度資訊，並以 Playwright 繞過 Cloudflare 驗證的網路爬蟲系統。
+> 自動化抓取玩股網盤後籌碼與市場廣度資訊，內建 Phase 3 終極破甲 (Playwright Stealth + 真人行為模擬) 網路爬蟲系統。
 
 ---
 
@@ -12,7 +12,7 @@
 .
 ├── src/                    # 核心程式碼
 │   ├── main.py             # 程式進入點 (排程或單次執行)
-│   ├── fetcher/            # 網路請求模組 (Playwright)
+│   ├── fetcher/            # 網路請求模組 (Playwright + Stealth)
 │   │   └── api.py
 │   ├── parsers/            # 資料解析與防呆模組
 │   │   ├── sentiment_parser.py
@@ -20,10 +20,10 @@
 │   │   └── breadth_parser.py
 │   └── exporter.py         # JSON 檔案輸出模組
 ├── tests/                  # 測試案例
-│   ├── test_fetcher.py     # fetcher 單元測試 (含 mock 機制)
+│   ├── test_fetcher.py     # fetcher 單元測試 (Mocking Playwright)
 │   └── test_parsers.py     # 結構解析單元測試
 ├── docs/                   # 規格書與 PRD 文件
-├── requirements.txt        # 依賴套件清單 (含 requests, bs4, playwright 等)
+├── requirements.txt        # 依賴套件清單
 └── README.md               # 專案指南 (本文件)
 ```
 
@@ -57,10 +57,10 @@ python src/main.py
 ```
 
 **預期結果**：
-執行完畢後，將於專案根目錄產生 `wantgoo_market_data.json` 檔案，內容包含結構化之盤後資訊：
+執行完畢後，將於專案根目錄產生 `wantgoo_market_data.json` 檔案，內容包含結構化之盤後資訊。系統已內建隨機 User-Agent、Viewport 與捲動行為來繞過 Cloudflare：
 ```json
 {
-  "global_timestamp": "2026-05-23T21:30:00+08:00",
+  "global_timestamp": "2026-05-23T22:50:00+08:00",
   "data": {
     "sentiment_indicators": {...},
     "institutional_chips": {...},

@@ -4,3 +4,4 @@ pytest
 responses
 playwright
 pytest-mock
+playwright-stealth

@@ -5,8 +5,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.fetcher.api import fetch_wantgoo_data
 
+@patch('src.fetcher.api.stealth')
 @patch('src.fetcher.api.sync_playwright')
-def test_fetch_wantgoo_data_success(mock_sync_playwright):
+def test_fetch_wantgoo_data_success(mock_sync_playwright, mock_stealth):
     mock_data = {
         "sentiment": {"net_position": 2500, "ratio_pct": 15.2, "daily_change": 500},
         "institutional": {"foreign_net_position": -5200, "foreign_daily_change": -1200, "top10_specific_net_position": 1200, "top10_daily_change": 300},
@@ -43,8 +44,9 @@ def test_fetch_wantgoo_data_success(mock_sync_playwright):
     result = fetch_wantgoo_data()
     assert result == mock_data
 
+@patch('src.fetcher.api.stealth')
 @patch('src.fetcher.api.sync_playwright')
-def test_fetch_wantgoo_data_failure(mock_sync_playwright):
+def test_fetch_wantgoo_data_failure(mock_sync_playwright, mock_stealth):
     mock_playwright = MagicMock()
     mock_sync_playwright.return_value.__enter__.return_value = mock_playwright
     mock_playwright.chromium.launch.side_effect = Exception("Browser launch failed")

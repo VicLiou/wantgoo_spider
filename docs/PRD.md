@@ -1,70 +1,24 @@
-# WantGoo Spider PRD (Product Requirements Document)
+# WantGoo Spider Phase 3 (終極破甲) PRD
 
-## 1. Project Overview
-Project Name: `wantgoo_spider`
-Goal: Build an automated web crawler to fetch after-market institutional chips and market breadth data from WantGoo (玩股網). The output will be a structured JSON file used by AI trading agents.
+## 專案概述
+- **專案名稱**：玩股網爬蟲系統 Phase 3
+- **專案絕對路徑**：`/home/ddad/projects/wantgoo_spider`
+- **目標**：解決 Phase 2 中 `playwright` 依舊被 Cloudflare 阻擋的問題。
 
-## 2. MVP Scope (Phase 1)
-According to the requirements, Phase 1 only focuses on **After-Market Data** (Modules 2, 3, 4). Real-time futures data (Module 1) is deferred to Phase 2.
+## 功能需求 (Functional Requirements)
+1. **導入 Stealth 隱形塗層**
+   - 必須導入 `playwright-stealth` 以抹除 webdriver 的特徵。
+   - 需要更新 `requirements.txt` 加入相關套件。
+2. **擬人化行為 (Human-like Behavior)**
+   - **隨機設定**：設定合理的 User-Agent 與 Viewport。
+   - **模擬動作**：在頁面加載後、攔截 API 前，需加入隨機的等待 (Sleep) 與模擬捲動 (Scroll) 動作，以通過 Cloudflare 的行為分析。
+3. **保留容錯機制**
+   - 必須絕對保留原本的 `status: error` 防呆與容錯機制。
 
-### Module 2: Retail Sentiment Indicators (散戶動向指標)
-*   **Target**: Micro TSMC / Mini TSMC Retail Long-Short Ratio.
-*   **Fields**:
-    *   `retail_net_position`: 散戶淨部位 (positive for net long, negative for net short)
-    *   `retail_long_short_ratio`: 散戶多空比百分比 (%)
-    *   `daily_change`: 相較前一日增減量
+## 非功能需求與測試規範 (Non-Functional Requirements & QA)
+- 測試必須維持 Mock 機制，**嚴禁在測試中連線真實伺服器**。
+- 必須包含 pytest 單元測試與 Linter 檢查 (如 Ruff)。
 
-### Module 3: Institutional Chips (法人主力籌碼)
-*   **Target**: Three major institutional investors / Large traders (Top 5 / Top 10 specific).
-*   **Fields**:
-    *   `foreign_net_position`: 外資台指期未平倉淨部位口數
-    *   `top10_specific_net_position`: 前十大特定法人未平倉淨部位口數
-    *   `daily_change`: 相較前一日增減量
-
-### Module 4: Market Breadth (市場廣度)
-*   **Target**: TAIEX market health.
-*   **Fields**:
-    *   `market_up_down_ratio`: 大盤漲跌家數比例
-    *   `moving_average_alignment`: 多頭排列家數比例 vs 空頭排列家數比例
-
-## 3. Output Format (JSON Schema)
-The crawler must produce a single JSON file (e.g., `wantgoo_market_data.json`) with the following structure for MVP:
-
-```json
-{
-  "global_timestamp": "2026-05-22T23:50:00+08:00",
-  "data": {
-    "sentiment_indicators": {
-      "updated_at": "2026-05-22T15:30:00+08:00",
-      "status": "ok",
-      "micro_tx_retail_ratio": {
-        "net_position": 2500,
-        "ratio_pct": 15.2,
-        "daily_change": 500
-      }
-    },
-    "institutional_chips": {
-      "updated_at": "2026-05-22T15:30:00+08:00",
-      "status": "ok",
-      "foreign_tx_net_position": -5200,
-      "foreign_daily_change": -1200,
-      "top10_specific_net_position": 1200,
-      "top10_daily_change": 300
-    },
-    "market_breadth": {
-      "updated_at": "2026-05-22T16:00:00+08:00",
-      "status": "ok",
-      "advancing_issues": 650,
-      "declining_issues": 230,
-      "bullish_alignment_pct": 45.5,
-      "bearish_alignment_pct": 30.2
-    }
-  }
-}
-```
-
-## 4. Technical Constraints & Red Lines
-1.  **Architecture**: Prefer `requests` (underlying API or HTML parsing). Only use `playwright` if absolutely necessary.
-2.  **Anti-Fragile (防呆)**: If a field is missing or page structure changes, set `status` to `"error"` (or `"waiting_data"`). ZERO TOLERANCE for silently returning `null` or `0`.
-3.  **Testing**: Unit tests must NOT hit the live WantGoo server. `pytest` MUST use mocking (e.g., local HTML fixtures or `responses`).
-4.  **Version Control**: Strict 2-phase release process. PR submitter must be Bot. `README.md` must be at the root.
+## 部署與交付規範 (DevOps)
+- 分支名稱：`feature/phase3-stealth`
+- PR 標題：`feat: 導入 Stealth 隱形塗層與擬人化行為 (Phase 3)`
